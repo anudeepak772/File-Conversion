@@ -1,7 +1,7 @@
 import socket
 import ssl
 
-HOST = "localhost"
+HOST = "localhost" 
 PORT = 8000
 
 
