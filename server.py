@@ -10,7 +10,7 @@ from scheduler import get_next_worker
 HOST = "0.0.0.0"
 PORT = 8000
 CHUNK_SIZE = 4096
-MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 MB
+MAX_FILE_SIZE = 100 * 1024 * 1024
 MAX_CLIENTS = 20
 TIMEOUT = 30
 
@@ -45,26 +45,26 @@ def stream_data(src, dest, total_bytes):
 
     end = time.time()
     duration = end - start
-    throughput = transferred / duration if duration > 0 else 0
+    throughput = transferred / duration if duration > 0 else transferred
 
-    logging.info(f"Streamed {transferred} bytes in {duration:.2f}s | Throughput: {throughput:.2f} B/s")
+    logging.info(
+        f"Streamed {transferred} bytes in {duration:.2f}s | Throughput: {throughput:.2f} B/s"
+    )
 
 
 def relay_response(worker_sock, client_sock):
-    # receive output filename
     name_len = int.from_bytes(recv_exact(worker_sock, 4), "big")
     filename = recv_exact(worker_sock, name_len)
 
     client_sock.sendall(name_len.to_bytes(4, "big"))
     client_sock.sendall(filename)
 
-    # receive file size
     size_bytes = recv_exact(worker_sock, 8)
     result_size = int.from_bytes(size_bytes, "big")
 
     client_sock.sendall(size_bytes)
 
-    # stream file back
+    # ✅ use streaming here
     stream_data(worker_sock, client_sock, result_size)
 
 
@@ -92,7 +92,6 @@ def handle_client(client_socket, address):
         name_len = int.from_bytes(recv_exact(client_socket, 4), "big")
         filename = recv_exact(client_socket, name_len).decode("utf-8")
 
-        # TARGET FORMAT
         target_len = int.from_bytes(recv_exact(client_socket, 4), "big")
         target_format = recv_exact(client_socket, target_len).decode("utf-8")
 
@@ -103,8 +102,8 @@ def handle_client(client_socket, address):
 
         logging.info(f"File: {filename} | Target: {target_format} | Size: {file_size}")
 
-        # -------- GET WORKER --------
-        worker_host, worker_port = get_next_worker()
+        # -------- SCHEDULER --------
+        worker_host, worker_port = get_next_worker(filename, target_format)
         logging.info(f"Dispatching to worker: {worker_host}:{worker_port}")
 
         # -------- CONNECT TO WORKER --------
@@ -122,13 +121,12 @@ def handle_client(client_socket, address):
 
         worker_socket.sendall(file_size.to_bytes(8, "big"))
 
-        # -------- SEND FILE DATA (FIXED) --------
-        file_data = recv_exact(client_socket, file_size)
-        worker_socket.sendall(file_data)
+        # ✅ STREAM FILE (instead of buffering)
+        stream_data(client_socket, worker_socket, file_size)
 
-        logging.info("File sent to worker")
+        logging.info("File streamed to worker")
 
-        # -------- RELAY RESULT --------
+        # -------- RELAY RESPONSE --------
         relay_response(worker_socket, client_socket)
 
         end_time = time.time()
@@ -157,7 +155,7 @@ def start_server():
     logging.info("Server started")
     logging.info(f"Listening on {HOST}:{PORT}")
 
-    # SSL SETUP
+    # SSL
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     context.load_cert_chain(certfile="server.crt", keyfile="server.key")
 
