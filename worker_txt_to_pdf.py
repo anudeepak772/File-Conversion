@@ -1,10 +1,9 @@
 import socket
-import fitz  # PyMuPDF
 from reportlab.pdfgen import canvas
 import io
 
 HOST = "0.0.0.0"
-PORT = 5001
+PORT = 5002
 CHUNK_SIZE = 4096
 
 
@@ -19,20 +18,7 @@ def _recv_exact(sock, num_bytes):
 
 
 # -------------------------------
-# PDF → TXT
-# -------------------------------
-def pdf_to_txt(data):
-    pdf = fitz.open(stream=data, filetype="pdf")
-    text = ""
-
-    for page in pdf:
-        text += page.get_text()
-
-    return text.encode("utf-8")
-
-
-# -------------------------------
-# TXT → PDF
+# TXT → PDF (FIXED - NO REPEAT)
 # -------------------------------
 def txt_to_pdf(data):
     text = data.decode("utf-8")
@@ -41,9 +27,19 @@ def txt_to_pdf(data):
     c = canvas.Canvas(buffer)
 
     y = 800
+
+    # ✅ ADD IMAGE 
+    try:
+        c.drawImage("sample.jpg", 50, y - 150, width=200, height=150)
+        y -= 170
+    except:
+        print("Image not found, skipping...")
+
+    # ✅ ONLY ONE LOOP (NO REPEAT)
     for line in text.split("\n"):
         c.drawString(50, y, line)
-        y -= 15
+        y -= 20
+
         if y < 50:
             c.showPage()
             y = 800
@@ -59,43 +55,35 @@ def txt_to_pdf(data):
 # -------------------------------
 def handle_job(client_socket):
     try:
-        # Receive filename
+        # filename
         name_len = int.from_bytes(_recv_exact(client_socket, 4), "big")
         filename = _recv_exact(client_socket, name_len).decode("utf-8")
 
-        # Receive target format
+        # target
         target_len = int.from_bytes(_recv_exact(client_socket, 4), "big")
         target_format = _recv_exact(client_socket, target_len).decode("utf-8")
 
-        # Receive file size
+        # size
         file_size = int.from_bytes(_recv_exact(client_socket, 8), "big")
 
-        # Receive file data
+        # data
         data = _recv_exact(client_socket, file_size)
 
         print(f"Received: {filename} → {target_format}")
 
-        # Detect input type
-        ext = filename.split(".")[-1].lower()
-
         # -------------------------------
-        # CONVERSION LOGIC
+        # CONVERSION
         # -------------------------------
-        if ext == "pdf" and target_format == "txt":
-            result = pdf_to_txt(data)
-            output_name = filename.replace(".pdf", ".txt")
-
-        elif ext == "txt" and target_format == "pdf":
+        if filename.endswith(".txt") and target_format == "pdf":
             result = txt_to_pdf(data)
             output_name = filename.replace(".txt", ".pdf")
-
         else:
             print("Unsupported conversion")
             client_socket.close()
             return
 
         # -------------------------------
-        # SEND BACK RESULT
+        # SEND RESULT
         # -------------------------------
         name_bytes = output_name.encode("utf-8")
 
@@ -123,7 +111,7 @@ def start_worker():
     server_socket.bind((HOST, PORT))
     server_socket.listen(10)
 
-    print(f"Worker listening on port {PORT}...")
+    print(f"TXT→PDF Worker listening on port {PORT}...")
 
     while True:
         client_socket, address = server_socket.accept()
@@ -131,4 +119,5 @@ def start_worker():
         handle_job(client_socket)
 
 
-start_worker()
+if __name__ == "__main__":
+    start_worker()

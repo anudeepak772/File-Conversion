@@ -1,15 +1,15 @@
-​
-​
-​
+I
+I
+I
 Distributed File Conversion System - Test File 
 This is a sample text file created for testing the TXT to PDF conversion. 
 Project Features: 
-●​ File transfer using TCP sockets 
-●​ Distributed architecture with client, server, and worker nodes 
-●​ Support for multiple file conversions 
+GI File transfer using TCP sockets 
+GI Distributed architecture with client, server, and worker nodes 
+GI Support for multiple file conversions 
 This file contains multiple lines to verify proper formatting in the generated PDF. 
-Line 1: Hello, this is a test.​
-Line 2: The system should convert this text into a readable PDF.​
+Line 1: Hello, this is a test.I
+Line 2: The system should convert this text into a readable PDF.I
 Line 3: Each line should appear properly in the output. 
 End of test file. 
  
