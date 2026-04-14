@@ -28,18 +28,17 @@ Conversion of one format file to another is facilitated with the help of multipl
 ```bash
 git clone https://github.com/<your-username>/File-Conversion.git
 cd File-Conversion
-
-#Install required libraries
+```
+### 2. Install required libraries
+```bash
 pip install reportlab PyPDF2
-
+```
 ## 🔐 SSL Certificate and Server Key Setup
-
 To enable secure communication (HTTPS), you need to generate an SSL certificate and private key.
 
 ### Generate SSL Certificate and Key
-
 Run the following command:
-
+```bash
 openssl req -new -x509 -days 365 -nodes -out server.crt -keyout server.key
 ```
 
@@ -55,10 +54,7 @@ openssl req -new -x509 -days 365 -nodes -out server.crt -keyout server.key
 ```bash
 server.key
 ```
-
-### Usage in Server
-
-Ensure your `server.py` is configured to use these files for HTTPS.
+---
 
 # Start the server
 python server.py
