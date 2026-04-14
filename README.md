@@ -32,8 +32,34 @@ cd File-Conversion
 #Install required libraries
 pip install reportlab PyPDF2
 
-#Generate SSL Certificate and Key
+## 🔐 SSL Certificate and Server Key Setup
+
+To enable secure communication (HTTPS), you need to generate an SSL certificate and private key.
+
+### Generate SSL Certificate and Key
+
+Run the following command:
+
+```bash
 openssl req -new -x509 -days 365 -nodes -out server.crt -keyout server.key
+```
+
+### What this does:
+- `server.crt` → SSL certificate (public)
+- `server.key` → Private key (keep this secure)
+
+### Important Notes:
+- These files will be created in your project directory
+- Do NOT share or upload `server.key` to GitHub
+- Add this to your `.gitignore`:
+
+```bash
+server.key
+```
+
+### Usage in Server
+
+Ensure your `server.py` is configured to use these files for HTTPS.
 
 # Start the server
 python server.py
