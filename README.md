@@ -67,6 +67,11 @@ python server.py
 # Start the scheduler
 python scheduler.py
 
+# Start the workers
+python worker_pdf_to_txt.py
+
+python worker_txt_to_pdf.py
+
 # Run the client
 python client.py
 
